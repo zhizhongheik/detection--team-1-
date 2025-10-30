@@ -1,0 +1,41 @@
+# Purpose : define how multiple containers (our api + database "postgresql")
+# will run together as one environment 
+
+
+services:
+ # Postgresql Database service
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: detection
+    
+    ports:
+      - "5432:5432" # Expose postgresql to host
+    volumes:
+      - pgdata:/var/lib/postgresql/data # persistent storage for DB data
+
+    # Fastapi application service
+
+  app:
+      build: .
+      container_name: fastapi_app
+      depends_on:
+        - db
+      environment:
+        DB_HOST: db
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_PASSWORD: admin
+        DB_NAME: detection
+      
+      ports:
+        - 8000:8000
+
+
+      command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+volumes:
+   pgdata:
