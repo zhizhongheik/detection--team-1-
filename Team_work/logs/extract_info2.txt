@@ -1,0 +1,14 @@
+=== Frame Extraction Summary ===
+Video: vid2.MOV
+FPS: 29.56
+Total frames: 1727
+Duration: 0:00:58
+Extraction interval: every 24 frames
+Skip seconds: 10.0
+Total extracted: 59
+Start time: 0:00:10
+End time: 0:00:58
+Color mode: Color
+Output directory: split_frames2
+CSV file: frames.csv
+Note: Extracted frames include timestamp and frame number watermark
