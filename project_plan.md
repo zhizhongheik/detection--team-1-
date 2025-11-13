@@ -38,6 +38,6 @@ Image Labeling: Use Roboflow to find at least 100 images, and select at least 50
 
 Model Training: Train the model using YOLOv8, aiming for an accuracy of over 80%. Test the images to see if the expected output is achieved.
 
-Inference Results: Summarize and improve the problems encountered during model training, ensuring the trained model can accurately identify and locate dust with high accuracy.
+Inference Results: Summarize and improve the problems encountered during model training. The model should be able to accurately identify and locate dust in test videos with high accuracy.
 
 Database: Docker
