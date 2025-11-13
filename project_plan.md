@@ -1,27 +1,43 @@
-# Task list & deadlines
+# Task List and Deadlines
 
- First Session FROM 30/10 TO 6/11: Make plan
+Phase 1 (October 30th to November 6th): Develop a plan
 
- 
+Phase 2 (November 6th to November 13th): Extract keyframes from videos, select images to create a dataset, and manually annotate the images (output YOLO format)
 
-# Assigned roles
+Phase 3 (November 13th to November 20th): Complete model training and test whether the model achieves the expected output results
 
-# Chosen tools & reasons
+# Role Assignment
 
-Roboflow: Easy and quickly to use.
+Phase 1:
 
-# Planned outputs for each phase
+A: Create a GitHub collaboration platform and join B
 
-Annotated images: Use Roboflow find at least 330 images(100 for training, 100 for test, 100 for validation, 30 for real test).
+B: Prepare scripts, write a project plan, README file, etc.
 
+Phase 2:
 
-Trained model: yolo
+A: Extract at least 54 images from keyframes in two dust videos, and select 50 usable photos as the dataset
 
+B: Use Roboflow to manually annotate each image, generating a labeled YOLO dataset
 
-Inference results
+Phase 3:
 
+A: Train and validate the model
 
-Database
+B: Test the model and refine the plan
 
+# Tool Selection and Reasons
 
-Docker
+Roboflow: Simple and easy to use, supports collaborative creation and output of YOLO files
+
+VScode: Convenient for connecting to GitHub and creating a collaborative cloud platform
+
+# Expected Outputs at Each Stage
+
+Image Labeling: Use Roboflow to find at least 100 images, and select at least 50 suitable for training and validation. Requirements: (Dust must be clearly visible in the image, and there should be no duplicate images).
+
+Model Training: Train the model using YOLOv8, aiming for an accuracy of over 80%. Test the images to see if the expected output is achieved.
+
+Inference Results: Summarize and improve the problems encountered during model training, ensuring the trained model can accurately identify and locate dust with high accuracy.
+
+Database: Docker
