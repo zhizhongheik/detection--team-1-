@@ -1,0 +1,47 @@
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: detection
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: admin
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 5
+
+  # FastAPI Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi_app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: app_user
+      DB_PASSWORD: admin
+      DB_NAME: detection
+    ports:
+      - "9008:8000"
+    volumes:
+      - ./model:/app/scripts/model
+      - ./uploaded_images:/app/uploaded_images
+      - ./uploaded_videos:/app/uploaded_videos
+      - ./scripts:/app/scripts
+    working_dir: /app/scripts
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
