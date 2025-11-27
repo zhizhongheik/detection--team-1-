@@ -3,14 +3,86 @@ import cv2
 import numpy as np
 import os
 from typing import List, Dict, Any
+import pygame
 
 class AluminumDustDetector:
-    def __init__(self, model_path: str = "model/best.pt"):
-        self.model = YOLO(model_path)
-        self.track_history = {}  # Store tracking history
+    def __init__(self, model_path: str = "/app/scripts/model/best.pt"):
+        self.model_path = model_path
+        self.model = None  # 延迟加载
+        self.track_history = {}
+        self.model_loaded = False
+        self.model_error = None
+        self.audio_file = "sound_alert.wav"
+    
+    def init_audio(self):
+        """初始化音频系统"""
+        if not self.audio_initialized:
+            try:
+                pygame.mixer.init()
+                self.audio_initialized = True
+                print("Audio system initialized successfully!")
+            except Exception as e:
+                print(f"Audio initialization failed: {e}")
+    
+    def play_detection_sound(self):
+        """播放检测开始音频"""
+        self.init_audio()
         
+        if not self.audio_initialized:
+            print("Audio system not available, skipping sound playback")
+            return
+        
+        try:
+            # 检查音频文件是否存在
+            if not os.path.exists(self.audio_file):
+                # 尝试在项目根目录查找
+                root_audio = os.path.join(os.path.dirname(__file__), "..", self.audio_file)
+                if os.path.exists(root_audio):
+                    self.audio_file = root_audio
+                else:
+                    print(f"Audio file not found: {self.audio_file}")
+                    return
+            
+            pygame.mixer.music.load(self.audio_file)
+            pygame.mixer.music.play()
+            print("Detection start sound played!")
+            
+        except Exception as e:
+            print(f"Error playing sound: {e}")
+    
+    def load_model(self):
+        """延迟加载模型"""
+        if self.model is None and not self.model_loaded:
+            try:
+                print(f"Loading model from: {self.model_path}")
+                self.model = YOLO(self.model_path)
+                self.model_loaded = True
+                print("Model loaded successfully!")
+            except Exception as e:
+                self.model_error = str(e)
+                print(f"Error loading model: {e}")
+                self.model = None
+                self.model_loaded = False
+    
     def detect(self, image_path: str) -> Dict:
         """Detection method using tracking"""
+
+        self.play_detection_sound()
+
+        self.load_model()  # 确保模型已加载
+        
+        if self.model is None:
+            return {
+                "error": f"Model not available: {self.model_error}",
+                "detection_count": 0,
+                "bboxes": [],
+                "confidences": [],
+                "track_ids": [],
+                "detections": [],
+                "annotated_image_path": image_path,
+                "average_confidence": 0.0
+            }
+        
         # Read original image
         original_image = cv2.imread(image_path)
         if original_image is None:
@@ -56,16 +128,26 @@ class AluminumDustDetector:
         
         # Save annotated image
         annotated_filename = f"annotated_{os.path.basename(image_path)}"
-        annotated_path = f"uploaded_images/{annotated_filename}"
-        cv2.imwrite(annotated_path, original_image)
-        
+        annotated_path = f"/app/uploaded_images/{annotated_filename}"  # 使用绝对路径
+    
+        # 确保目录存在
+        os.makedirs(os.path.dirname(annotated_path), exist_ok=True)
+    
+        # 保存图片
+        success = cv2.imwrite(annotated_path, original_image)
+        if not success:
+          print(f"Warning: Failed to save annotated image to {annotated_path}")
+           # 如果保存失败，使用原路径
+          annotated_path = image_path
+    
         return {
             "detection_count": len(detections),
-            "bboxes": bboxes,
+             "bboxes": bboxes,
             "confidences": confidences,
             "track_ids": track_ids,
             "detections": detections,
             "annotated_image_path": annotated_path,
+            "annotated_image_url": f"/uploaded_images/{annotated_filename}",
             "average_confidence": round(np.mean(confidences).item(), 4) if confidences else 0.0
         }
     
@@ -103,7 +185,6 @@ class AluminumDustDetector:
             label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2
         )
         
-        
         # Draw text
         cv2.putText(image, label, (x1, y1 - 5), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
@@ -118,6 +199,26 @@ class AluminumDustDetector:
     
     def detect_video(self, video_path: str, sample_interval: int = 5) -> Dict:
         """Video detection using tracking"""
+
+        self.play_detection_sound()
+
+        self.load_model()  # 确保模型已加载
+        
+        if self.model is None:
+            return {
+                "error": f"Model not available: {self.model_error}",
+                "total_frames": 0,
+                "analyzed_frames": 0,
+                "total_detections": 0,
+                "average_detections_per_frame": 0,
+                "video_duration": 0,
+                "fps": 0,
+                "sample_interval": sample_interval,
+                "unique_tracks": 0,
+                "frames_summary": [],
+                "annotated_video_path": video_path
+            }
+        
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
             raise Exception("Cannot open video file")
@@ -166,7 +267,7 @@ class AluminumDustDetector:
                         track_id = int(track_id.cpu().numpy())
                         
                         # Apply confidence threshold
-                        if confidence < 0.7:  # Adjustable
+                        if confidence < 0.689:  # Adjustable
                             continue
                             
                         frame_confidences.append(confidence)
@@ -217,4 +318,5 @@ class AluminumDustDetector:
             "annotated_video_path": output_video_path
         }
 
+# 修改这里，不立即初始化模型
 detector = AluminumDustDetector()

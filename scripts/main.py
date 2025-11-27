@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 import os
 import shutil
+import traceback  # 添加这个导入
 from detection_model import detector
 import uvicorn
 
@@ -42,16 +43,21 @@ async def detect_aluminum_dust_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Unsupport")
     
     # Save file
-    original_path = f"/app/uploaded_images/{file.filename}"
-    os.makedirs(os.path.dirname(original_path), exist_ok=True)
+    original_path = f"uploaded_images/{file.filename}"
     with open(original_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
     try:
+        print(f"Starting detection for: {original_path}")  # 添加日志
         detection_result = detector.detect(original_path)
         detection_result["annotated_image_url"] = f"/uploaded_images/annotated_{file.filename}"
+        print(f"Detection completed: {detection_result}")  # 添加日志
         return detection_result
     except Exception as e:
+        # 打印详细的错误信息
+        error_traceback = traceback.format_exc()
+        print(f"Error during detection: {str(e)}")
+        print(f"Full traceback: {error_traceback}")
         raise HTTPException(status_code=500, detail=f"error: {str(e)}")
 
 # Video Detection Interface
@@ -67,10 +73,15 @@ async def detect_aluminum_dust_video(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
     
     try:
+        print(f"Starting video detection for: {original_path}")
         video_result = detector.detect_video(original_path)
         video_result["annotated_video_url"] = f"/uploaded_videos/annotated_{file.filename}"
+        print(f"Video detection completed")
         return video_result
     except Exception as e:
+        error_traceback = traceback.format_exc()
+        print(f"Error during video detection: {str(e)}")
+        print(f"Full traceback: {error_traceback}")
         raise HTTPException(status_code=500, detail=f"error: {str(e)}")
 
 @app.get("/api/")
